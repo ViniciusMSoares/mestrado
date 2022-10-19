@@ -1,0 +1,713 @@
+---
+title: "Projeto"
+output:
+    html_document:
+    df_print: paged
+theme: sandstone
+---
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(here)
+library(colorRamps)
+source(here::here("code/lib.R"))
+theme_set(theme_bw())
+
+knitr::opts_chunk$set(tidy = FALSE,
+                      fig.width = 6,
+                      fig.height = 5,
+                      echo = FALSE)
+
+```
+
+```{r read}
+consumo_raw = read_projectconsumo()
+
+temperatura_raw = read_projecttemperatura_04_09()
+
+temp_suporte_raw = read_projecttempsuporte()
+
+temp_suporte = temp_suporte_raw %>% 
+  filter(sala == "TH-Suporte") %>% 
+  select(-hora)
+
+temp_suporte_21_raw = read_projecttempsuporte21()
+
+temp_suporte21 = temp_suporte_21_raw %>% 
+  filter(sala == "TH-Suporte") %>% 
+  select(-hora)
+
+temp_suporte25 = read_projecttempsuporte25() %>% 
+  select(-hora)
+
+temp_externa21 = read_projecttempexterna21() %>% 
+  select(-hora_utc)
+
+temp_externa25 = read_projecttempexterna25() %>% 
+  select(-hora_utc)
+
+consumo_suporte_raw = read_projectconsumosuporte()
+
+consumo_suporte = merge(consumo_suporte_raw, temp_suporte, all.x = FALSE, all.y = TRUE)
+
+consumos = consumo_suporte_raw
+
+consumos2 = merge(consumo_suporte_raw, temperatura_raw, all.x = TRUE, all.y = FALSE, by.x=c("data", "hora_simples"), by.y=c("data", "hora_simples"))
+
+consumos21graus_raw = read_projectconsumo21()
+
+consumo_suporte21 = merge(consumos21graus_raw, temp_suporte21, all.x = FALSE, all.y = TRUE)
+
+consumo_suporte21 = merge(consumo_suporte21, temp_externa21, all.x = TRUE, all.y = FALSE)
+
+consumos25graus_raw = read_projectconsumo25()
+
+consumo_suporte25 = merge(consumos25graus_raw, temp_suporte25, all.x = FALSE, all.y = TRUE)
+
+consumo_suporte25 = merge(consumo_suporte25, temp_externa25, all.x = TRUE, all.y = FALSE)
+
+consumos23graus_raw = read_projectconsumo23()
+
+consumo_suporte23 = consumos25graus_raw
+
+glimpse(consumos2)
+```
+
+
+
+```{r}
+periodo1 <- c("08:00:00","09:00:00","10:00:00","11:00:00")
+periodo2 <- c("14:00:00","15:00:00","16:00:00","17:00:00")
+horario_trabalho <- c("08:00:00","09:00:00","10:00:00","11:00:00","12:00:00","13:00:00","14:00:00","15:00:00","16:00:00","17:00:00")
+
+
+operacoes <- NA
+
+operacoes$sala <- c("Pow-ACBruxaxa", "Pow-AC1Triunfo", "Pow-ACSuporte", "Pow-ACBruxaxa", "Pow-AC1Triunfo", "Pow-ACSuporte")
+operacoes$periodo <- c("1", "1", "1", "2", "2", "2")
+
+sumario_operacoes = consumos2 %>% 
+    filter(consumos2$hora %in% horario_trabalho) %>%
+    filter(potencia > 0) %>% 
+    group_by(nome, data) %>% 
+    filter(n() == 10)
+
+glimpse(sumario_operacoes)
+
+sumario_operacoes %>%
+    filter(hora %in% horario_trabalho) %>%
+    ggplot(aes(x = temperatura)) +
+    geom_histogram(binwidth = 1, fill = "red", alpha = .7, color = "black")+
+    geom_vline(aes(xintercept = mean(temperatura)),col='blue',size=2)+
+    labs(
+         x = "Temperaturas"
+    )
+    ggsave("temperaturas.pdf")
+    
+```
+
+```{r}
+
+operacoes_periodo1 <- sumario_operacoes %>%
+  filter(hora %in% periodo1) %>%
+  group_by(nome, data) %>%
+  summarise(
+    temp_media = mean(temperatura),
+    pot_total = sum(potencia),
+    operacao_individual = sum(potencia > 0),
+  .groups = "drop") %>%
+    filter(pot_total > 0) %>% 
+    group_by(nome, data) %>%
+    summarise(
+        temp_media = temp_media,
+        condicao = temp_media > 24,
+        pot_total = pot_total,
+        operacao_individual_media = operacao_individual,
+        periodo = "Manhã",
+        .groups = "drop")
+
+
+operacoes_periodo2 <- sumario_operacoes %>%
+  filter(hora %in% periodo2) %>%
+  group_by(nome, data) %>%
+  summarise(
+    temp_media = mean(temperatura),
+    pot_total = sum(potencia),
+    operacao_individual = sum(potencia > 0),
+  .groups = "drop") %>%
+    filter(pot_total > 0) %>% 
+    group_by(nome, data) %>%
+    summarise(
+        temp_media = temp_media,
+        condicao = temp_media > 24,
+        pot_total = pot_total,
+        operacao_individual_media = operacao_individual,
+        periodo = "Tarde",
+        .groups = "drop")
+
+operacoes_total <- rbind(operacoes_periodo1, operacoes_periodo2)
+  
+sumario_consumo = operacoes_total %>% 
+  group_by(nome, periodo, condicao) %>% 
+  summarise(
+    consumo_medio = mean(pot_total),
+    horas_media = mean(operacao_individual_media),
+    .groups = "drop"
+  )
+
+
+
+```
+
+```{r}
+
+sumario_consumo_A <- sumario_consumo %>%
+  filter(!condicao) %>% 
+  summarise(
+    nome = nome,
+    periodo = periodo,
+    consumo_medio_ameno = consumo_medio,
+    horas_media_ameno = horas_media
+  )
+
+sumario_consumo_S <- sumario_consumo %>%
+  filter(condicao) %>% 
+  summarise(
+    nome = nome,
+    periodo = periodo,
+    consumo_medio_severo = consumo_medio,
+    horas_media_severo = horas_media
+  )
+
+sumario_final <- merge(sumario_consumo_A, sumario_consumo_S)
+
+glimpse(sumario_final)
+
+
+```
+
+```{r}
+sumario_final %>% 
+    ggplot(aes(x = horas_media_severo, y = horas_media_ameno)) +
+    geom_abline(intercept = 0, slope = 1) +
+    geom_point(aes(group = periodo, color = periodo, size = 5, alpha = .9)) +
+    labs(
+         y = "Condições amenas",
+         x = "Condições severas"
+    )
+    ggsave("horas.pdf")
+```
+
+```{r}
+sumario_final_medias <- sumario_final %>% 
+  summarise(
+    consumo_ameno_medio_total = mean(consumo_medio_ameno),
+    consumo_severo_medio_total = mean(consumo_medio_severo),
+    horas_media_ameno_total = mean(horas_media_ameno),
+    horas_media_severo_total = mean(horas_media_severo)
+  )
+
+glimpse(sumario_final_medias)
+```
+
+```{r}
+horario_completo <- c("08:00:00","09:00:00","10:00:00","11:00:00","12:00:00",
+                      "13:00:00","14:00:00","15:00:00","16:00:00","17:00:00")
+horario_reduzido <- c("08:00:00","09:00:00","10:00:00","11:00:00",
+                      "14:00:00","15:00:00","16:00:00","17:00:00")
+horario_reduzido2 <- c("08:00:00","09:00:00","10:00:00","11:00:00","12:00:00",
+                    "13:00:00","14:00:00","15:00:00")
+horario_reduzido3 <- c("10:00:00","11:00:00","12:00:00",
+                    "13:00:00","14:00:00","15:00:00","16:00:00","17:00:00")
+horario_manha <- c("08:00:00","09:00:00","10:00:00","11:00:00")
+horario_tarde <- c("14:00:00","15:00:00","16:00:00","17:00:00")
+
+dias_completos = consumos %>% 
+    filter(consumos$hora %in% horario_completo) %>%
+    filter(potencia > 50) %>%
+    group_by(nome,data) %>% 
+    filter(n() == 10)
+
+dias_completos21 = consumo_suporte21 %>% 
+    filter(consumo_suporte21$hora %in% horario_completo) %>%
+    filter(potencia > 50) %>%
+    group_by(nome,data) %>% 
+    filter(n() > 8)
+
+dias_completos25 = consumo_suporte25 %>% 
+    filter(consumo_suporte25$hora %in% horario_completo) %>%
+    filter(potencia > 50) %>%
+    group_by(nome,data) %>% 
+    filter(n() > 8)
+
+dias_completos23 = consumos23graus_raw %>% 
+    filter(consumos23graus_raw$hora %in% horario_completo) %>%
+    filter(potencia > 50) %>%
+    group_by(nome,data) %>% 
+    filter(n() > 8)
+
+
+glimpse(dias_completos23)
+```
+
+
+```{r}
+sumario_dias_completos = dias_completos %>% 
+  group_by(nome, data) %>% 
+  summarise(
+    consumo_total = sum(potencia),
+    consumo_reduzido = sum(potencia[hora %in% horario_reduzido]),
+    .groups = "drop"
+  )
+
+sumario_dias_completos_diferenca = sumario_dias_completos %>% 
+  summarise(
+    diferenca = consumo_total - consumo_reduzido,
+    dif_percentual = 100 * diferenca/consumo_total,
+    .groups = "drop"
+  )
+
+sumario_dias_completos_medias = sumario_dias_completos_diferenca %>% 
+  summarise(
+    media_economia = mean(diferenca),
+    media_economia_percentual = mean(dif_percentual),
+    .groups = "drop"
+  )
+
+sumario_dias_completos %>%
+    ggplot(aes(x = consumo_total)) +
+    geom_histogram(binwidth = 1000, fill = "red", alpha = .7, color = "black")+
+    geom_vline(aes(xintercept = mean(consumo_total)),col='blue',size=2)+
+    labs(
+         x = "Consumo por dia (AC 23ºC)"
+    )
+    ggsave("consumoTotal.pdf")
+    
+sumario_dias_completos_diferenca %>%
+    ggplot(aes(x = dif_percentual)) +
+    geom_histogram(binwidth = 1, fill = "red", alpha = .7, color = "black")+
+    labs(
+         x = "Diferença consumo (%)"
+    )
+    ggsave("diferencaConsumo.pdf")
+    
+    
+    
+sumario_dias_completos21 = dias_completos21 %>% 
+  group_by(nome, data) %>% 
+  summarise(
+    consumo_total = sum(potencia),
+    .groups = "drop"
+  )
+  
+sumario_dias_completos21 %>%
+    ggplot(aes(x = consumo_total)) +
+    geom_histogram(binwidth = 1000, fill = "green", alpha = .7, color = "black")+
+    geom_vline(aes(xintercept = mean(consumo_total)),col='blue',size=2)+
+    labs(
+         x = "Consumo por dia (AC 21ºC)"
+    )
+    ggsave("consumoTotal21graus.pdf")
+    
+
+sumario_dias_completos25 = dias_completos25 %>% 
+  group_by(nome, data) %>% 
+  summarise(
+    consumo_total = sum(potencia),
+    .groups = "drop"
+  )
+        
+sumario_dias_completos25 %>%
+    ggplot(aes(x = consumo_total)) +
+    geom_histogram(binwidth = 1000, fill = "orange", alpha = .7, color = "black")+
+    geom_vline(aes(xintercept = mean(consumo_total)),col='blue',size=2)+
+    labs(
+         x = "Consumo por dia (AC 25ºC manhã, 22ºC tarde)"
+    )
+    ggsave("consumoTotal25graus.pdf")
+    
+sumario_dias_completos_hitorico = sumario_operacoes %>% 
+  group_by(nome, data) %>% 
+  summarise(
+    consumo_total = sum(potencia),
+    temp_externa_media = mean(temperatura),
+    .groups = "drop"
+  )
+    
+dias_completos %>% 
+    ggplot(aes(x = potencia)) +
+    geom_histogram(binwidth = 200, fill = "red", alpha = .7, color = "black")+
+    geom_vline(aes(xintercept = mean(potencia)),col='blue',size=2)+
+    labs(
+         x = "Consumo por hora (AC 23ºC)"
+    )
+    ggsave("consumoPorHora.pdf")
+    
+
+dias_completos21 %>% 
+    ggplot(aes(x = potencia)) +
+    geom_histogram(binwidth = 200, fill = "green", alpha = .7, color = "black")+
+    geom_vline(aes(xintercept = mean(potencia)),col='blue',size=2)+
+    labs(
+         x = "Consumo por hora (AC 21ºC)"
+    )
+    ggsave("consumoPorHora21.pdf")
+
+    
+dias_completos25 %>% 
+    ggplot(aes(x = potencia)) +
+    geom_histogram(binwidth = 200, fill = "orange", alpha = .7, color = "black")+
+    geom_vline(aes(xintercept = mean(potencia)),col='blue',size=2)+
+    labs(
+         x = "Consumo por hora (AC 25ºC manhã, 22ºC tarde)"
+    )
+    ggsave("consumoPorHora25.pdf")
+    
+    
+dias_completos %>% 
+    filter(hora %in% horario_manha) %>%
+    ggplot(aes(x = potencia)) +
+    geom_histogram(binwidth = 200, fill = "red", alpha = .7, color = "black")+
+    geom_vline(aes(xintercept = mean(potencia)),col='blue',size=2)+
+    labs(
+         x = "Consumo por hora (AC 23ºC Manhã)"
+    )
+    ggsave("consumoPorHoraManha.pdf")
+    
+
+dias_completos21 %>% 
+    filter(hora %in% horario_manha) %>%
+    ggplot(aes(x = potencia)) +
+    geom_histogram(binwidth = 200, fill = "green", alpha = .7, color = "black")+
+    geom_vline(aes(xintercept = mean(potencia)),col='blue',size=2)+
+    labs(
+         x = "Consumo por hora (AC 21ºC Manhã)"
+    )
+    ggsave("consumoPorHoraManha21.pdf")
+
+    
+dias_completos25 %>% 
+    filter(data != "26/10/2021") %>% 
+    filter(hora %in% horario_manha) %>%
+    ggplot(aes(x = potencia)) +
+    geom_histogram(binwidth = 200, fill = "orange", alpha = .7, color = "black")+
+    geom_vline(aes(xintercept = mean(potencia)),col='blue',size=2)+
+    labs(
+         x = "Consumo por hora (AC 25ºC Manhã)"
+    )
+    ggsave("consumoPorHoraManha25.pdf")
+    
+sumario_dias_completos23 = dias_completos23 %>% 
+  group_by(nome, data) %>% 
+  summarise(
+    consumo_total = sum(potencia),
+    .groups = "drop"
+  )
+        
+```
+
+
+```{r}
+dias_completos21 %>%
+    ggplot(aes(x = temp_externa)) +
+    geom_histogram(binwidth = 1, fill = "red", alpha = .7, color = "black")+
+    geom_vline(aes(xintercept = mean(temp_externa)),col='blue',size=2)+
+    labs(
+         x = "Temperatura Externa (21)"
+    )
+    ggsave("tempExterna21.pdf")
+    
+dias_completos25 %>%
+    ggplot(aes(x = temp_externa)) +
+    geom_histogram(binwidth = 1, fill = "red", alpha = .7, color = "black")+
+    geom_vline(aes(xintercept = mean(temp_externa)),col='blue',size=2)+
+    labs(
+         x = "Temperatura Externa (25)"
+    )
+    ggsave("tempExterna25.pdf")
+```
+
+    
+```{r}
+sumario_dias_completos %>%
+    filter(consumo_total - consumo_reduzido > 50) %>% 
+    ggplot(aes(x = consumo_total/1000, y = (consumo_total - consumo_reduzido)/1000)) +
+    geom_line(binwidth = 1000, fill = "red", lwd = 1, color = "red")+
+    labs(
+         x = "Consumo Total (kWh)",
+         y = "Capacidade de economia (kWh)"
+    )
+    ggsave("consumoXdiferenca.pdf")
+    
+    
+consumo_acumulado_suporte = dias_completos %>% 
+  group_by(data) %>% 
+  summarize(
+    potencia = cumsum(potencia),
+    hora = hora,
+    .groups = "drop"
+  )
+
+sumario_consumo_acumulado_suporte = consumo_acumulado_suporte %>% 
+  group_by(hora) %>% 
+  summarize(
+    consumo_acumulado_media = mean(potencia),
+    .groups = "drop"
+  )
+    
+sumario_consumo_acumulado_suporte %>%
+    ggplot(aes(x = consumo_acumulado_media/1000, y = hora)) +
+    geom_point(fill = "red", lwd = 1, color = "red")+
+    labs(
+         x = "Consumo Acumulado (kWh)",
+         y = "Hora"
+    )
+    ggsave("consumoAcumulado.pdf")
+
+```
+
+
+```{r}
+sumario_suporte = consumo_suporte %>% 
+    filter(consumo_suporte$hora %in% horario_completo) %>%
+    filter(potencia > 0)
+
+
+
+temp_interna_suporte = sumario_suporte %>% 
+  filter(nome == "Pow-ACSuporte") %>% 
+  mutate(dif_temp_ac = temperatura-23)
+
+
+temp_interna_suporte %>%
+    ggplot(aes(x = potencia, y = dif_temp_ac)) +
+    geom_abline(intercept = 0, slope = 1) +
+    geom_point(aes(size = 1, alpha = .9), color = "red") +
+    labs(
+         y = "Variação temperatura (AC 23ºC)",
+         x = "Consumo"
+    )
+    ggsave("difTempAC.pdf")
+    
+
+temp_interna_suporte %>% 
+    ggplot(aes(x = temperatura)) +
+    geom_histogram(binwidth = 1, fill = "red", alpha = .7, color = "black")+
+    geom_vline(aes(xintercept = mean(temperatura)),col='blue',size=2)+
+    labs(
+         x = "Temperatura medida por hora (AC 23º C)"
+    )
+    ggsave("tempSuporteHist23.pdf")
+    
+
+sumario_suporte21 = consumo_suporte21 %>% 
+    filter(consumo_suporte21$hora %in% horario_completo) %>%
+    filter(potencia > 100)
+
+temp_interna_suporte21 = sumario_suporte21 %>% 
+  filter(nome == "Pow-ACSuporte") %>% 
+  mutate(dif_temp_ac = temperatura-21)
+    
+temp_interna_suporte21 %>% 
+    ggplot(aes(x = temperatura)) +
+    geom_histogram(binwidth = 1, fill = "green", alpha = .7, color = "black")+
+    geom_vline(aes(xintercept = mean(temperatura)),col='blue',size=2)+
+    labs(
+         x = "Temperatura medida por hora (AC 21º C)"
+    )
+    ggsave("tempSuporteHist21.pdf")
+    
+temp_interna_suporte21 %>%
+    ggplot(aes(x = potencia, y = dif_temp_ac)) +
+    geom_abline(intercept = 0, slope = 1) +
+    geom_point(aes(size = 1, alpha = .9), colour = "green") +
+    labs(
+         y = "Variação temperatura (AC 21ºC)",
+         x = "Consumo"
+    )
+    ggsave("difTempAC21.pdf")
+    
+
+```
+
+
+
+
+
+```{r}
+# set up cut-off values 
+breaks <- c(17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32)
+# specify interval/bin labels
+tags <- c("[17-18)","[18-19)", "[19-20)","[20-21)","[21-22)", "[22-23)", "[23-24)", "[24-25)", "[25-26)","[26-27)", "[27-28)","[28-29)", "[29-30)", "[30-21)", "[31-32)")
+# bucketing values into bins
+temp_interna_suporte21$tempRange <- cut(temp_interna_suporte21$temperatura, 
+                  breaks=breaks, 
+                  include.lowest=TRUE, 
+                  right=FALSE, 
+                  labels=tags,
+                    )
+
+temp_interna_suporte$tempRange <- cut(temp_interna_suporte$temperatura, 
+                  breaks=breaks, 
+                  include.lowest=TRUE, 
+                  right=FALSE, 
+                  labels=tags,
+                    )
+
+sumario_operacoes$tempRange <- cut(sumario_operacoes$temperatura, 
+                  breaks=breaks, 
+                  include.lowest=TRUE, 
+                  right=FALSE, 
+                  labels=tags,
+                    )
+
+# set up cut-off values 
+breaksCondicao <- c(18,24,32)
+# specify interval/bin lbels
+tagsCondicao <- c("[18-24)","[24-32)")
+# bucketing values into bins
+sumario_operacoes$tempRangeCondicao <- cut(sumario_operacoes$temperatura, 
+                  breaks=breaksCondicao, 
+                  include.lowest=TRUE, 
+                  right=FALSE, 
+                  labels=tagsCondicao,
+                    )
+
+
+
+# inspect bins
+summary(sumario_operacoes$tempRange)
+```
+
+```{r}
+temp_interna_suporte21 %>% 
+    group_by(tempRange) %>% 
+    ggplot(aes(x = tempRange, y = potencia)) +
+    geom_point(fill = "green", alpha = .7, color = "black")+
+    labs(
+         x = "Temperatura medida (AC 21º C)",
+         y = "Consumo médio"
+    )
+    ggsave("consXtemp21.pdf")
+```
+
+
+```{r}
+consumoXtemperatura23 <- temp_interna_suporte %>% 
+  group_by(tempRange) %>% 
+  summarise(
+    media_consumo = mean(potencia),
+    .groups = "drop"
+  )
+
+consumoXtemperatura21 <- temp_interna_suporte21 %>% 
+  group_by(tempRange) %>% 
+  summarise(
+    media_consumo = mean(potencia),
+    .groups = "drop"
+  )
+
+
+consumoXtemperaturaOut <- sumario_operacoes %>% 
+  filter(potencia > 100) %>% 
+  group_by(tempRange) %>% 
+  summarise(
+    media_consumo = mean(potencia),
+    .groups = "drop"
+  )
+
+consumoXtemperaturaOutCondicao <- sumario_operacoes %>% 
+  filter(potencia > 100) %>% 
+  group_by(tempRangeCondicao) %>% 
+  summarise(
+    media_consumo = mean(potencia),
+    min = min(potencia),
+    count = n(),
+    .groups = "drop"
+  )
+
+medias_consumo_suporte <- sumario_dias_completos %>% 
+  summarise(
+    media_consumo_total = mean(consumo_total)
+  )
+
+medias_consumo_suporte21 <- sumario_dias_completos21 %>% 
+  summarise(
+    media_consumo_total = mean(consumo_total)
+  )
+
+medias_consumo_suporte25 <- sumario_dias_completos25 %>% 
+  summarise(
+    media_consumo_total = mean(consumo_total)
+  )
+
+medias_consumo_suporte23 <- sumario_dias_completos23 %>% 
+  summarise(
+    media_consumo_total = mean(consumo_total)
+  )
+
+glimpse(medias_consumo_suporte21)
+
+medias_temp_suporte <- temp_interna_suporte %>% 
+  summarise(
+    media_temperatura = mean(temperatura)
+  )
+
+medias_temp_suporte21 <- temp_interna_suporte21 %>% 
+  summarise(
+    media_temperatura = mean(temperatura)
+  )
+
+medias_consumo_por_temp_externa23 <- sumario_dias_completos_hitorico %>% 
+  filter(26.5 < temp_externa_media) %>% 
+  filter(27.5 > temp_externa_media) %>% 
+    summarise(
+      media_consumo = mean(consumo_total)
+    )
+
+
+
+glimpse(medias_temp_suporte)
+
+glimpse(consumoXtemperatura21)
+
+glimpse(consumoXtemperaturaOut)
+
+glimpse(consumoXtemperaturaOutCondicao)
+```
+
+```{r}
+consumoXtemperatura21 %>%
+    ggplot(aes(x = tempRange, y = media_consumo)) +
+    geom_point(fill = "green", alpha = .7, color = "black")+
+    labs(
+         x = "Temperatura medida (AC 21º C)",
+         y = "Consumo médio"
+    )
+    ggsave("consXtemp21.pdf")
+    
+consumoXtemperaturaOut %>%
+    ggplot(aes(x = tempRange, y = media_consumo)) +
+    geom_point(fill = "green", alpha = .7, color = "black", size = 3)+
+    labs(
+         x = "Temperatura externa",
+         y = "Consumo médio"
+    )
+    ggsave("consXtempOut.pdf")
+  
+```
+
+```{r}
+consumosXtemp2 = data.frame(consumo = c(16619.73,18071.67,18697.8,18943), temperatura = c("23 (histórico)","21","23","25"))
+
+    
+consumosXtemp2 %>% 
+    ggplot(aes(x = temperatura, y = consumo)) +
+    geom_abline(intercept = 0, slope = 1) +
+    geom_point(aes(size = 1, alpha = .9), colour = consumosXtemp2$temperatura) +
+    labs(
+         y = "Consumo",
+         x = "Temperatura AC"
+    )
+    ggsave("conxtempsumario.pdf")
+```

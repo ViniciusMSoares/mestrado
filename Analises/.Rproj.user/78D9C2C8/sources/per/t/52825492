@@ -1,0 +1,24 @@
+{
+    "id": "52825492",
+    "path": "~/Mestrado/P1/FPCC2/projetoFPCC2/code/0-import-dataset.R",
+    "project_path": "code/0-import-dataset.R",
+    "type": "r_source",
+    "hash": "3388988610",
+    "contents": "",
+    "dirty": false,
+    "created": 1657502922513.0,
+    "source_on_save": false,
+    "relative_order": 2,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1626040804,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1626040804,
+    "read_only": false,
+    "read_only_alternatives": []
+}

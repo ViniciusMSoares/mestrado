@@ -1,0 +1,9 @@
+  [Core]
+  Name = ColetorPlugin
+  Module = coletor
+
+  [Documentation]
+  Description = Notify Mattermost users of new form to be answered, and retrieve responses.
+
+  [Python]
+  Version = 3

@@ -1,0 +1,655 @@
+[
+    {
+        "id": "cc0c669d94886947",
+        "type": "tab",
+        "label": "Coletor TH",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "53648860653e62cd",
+        "type": "ewelink-devices",
+        "z": "cc0c669d94886947",
+        "name": "",
+        "auth": "ac872718dc6297f2",
+        "x": 290,
+        "y": 80,
+        "wires": [
+            [
+                "74db342009d08f2b"
+            ]
+        ]
+    },
+    {
+        "id": "a6fe7d8eb9202b7e",
+        "type": "inject",
+        "z": "cc0c669d94886947",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payloadType": "date",
+        "x": 100,
+        "y": 80,
+        "wires": [
+            [
+                "53648860653e62cd"
+            ]
+        ]
+    },
+    {
+        "id": "74db342009d08f2b",
+        "type": "debug",
+        "z": "cc0c669d94886947",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 490,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "1ece8cb0723b692c",
+        "type": "debug",
+        "z": "cc0c669d94886947",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1230,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "3727192f928163e2",
+        "type": "inject",
+        "z": "cc0c669d94886947",
+        "name": "Repetidor",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "0 0-22 * * *",
+        "once": true,
+        "onceDelay": "5",
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 110,
+        "y": 300,
+        "wires": [
+            [
+                "989e687dc11c6157",
+                "2da91cb31f4a9e1c"
+            ]
+        ]
+    },
+    {
+        "id": "24ea26aea5f6edfb",
+        "type": "csv",
+        "z": "cc0c669d94886947",
+        "name": "temperaturas",
+        "sep": ",",
+        "hdrin": "",
+        "hdrout": "none",
+        "multi": "one",
+        "ret": "\\n",
+        "temp": "",
+        "skip": "0",
+        "strings": true,
+        "include_empty_strings": false,
+        "include_null_values": "",
+        "x": 550,
+        "y": 300,
+        "wires": [
+            [
+                "3452f7bbfcbc62b1"
+            ]
+        ]
+    },
+    {
+        "id": "63fbe48d349a6e61",
+        "type": "file",
+        "z": "cc0c669d94886947",
+        "name": "Temperaturas",
+        "filename": "coletorTH.txt",
+        "filenameType": "str",
+        "appendNewline": false,
+        "createDir": true,
+        "overwriteFile": "false",
+        "encoding": "none",
+        "x": 1060,
+        "y": 300,
+        "wires": [
+            [
+                "1ece8cb0723b692c"
+            ]
+        ]
+    },
+    {
+        "id": "0908c35100f09a21",
+        "type": "change",
+        "z": "cc0c669d94886947",
+        "name": "TH-Ypioca",
+        "rules": [
+            {
+                "t": "change",
+                "p": "payload",
+                "pt": "msg",
+                "from": "ok",
+                "fromt": "str",
+                "to": "TH-Ypioca",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 870,
+        "y": 300,
+        "wires": [
+            [
+                "63fbe48d349a6e61"
+            ]
+        ]
+    },
+    {
+        "id": "f9fcefa5469f5044",
+        "type": "csv",
+        "z": "cc0c669d94886947",
+        "name": "temperaturas",
+        "sep": ",",
+        "hdrin": "",
+        "hdrout": "none",
+        "multi": "one",
+        "ret": "\\r\\n",
+        "temp": "",
+        "skip": "0",
+        "strings": true,
+        "include_empty_strings": false,
+        "include_null_values": "",
+        "x": 550,
+        "y": 440,
+        "wires": [
+            [
+                "90246fea7e5e361c"
+            ]
+        ]
+    },
+    {
+        "id": "84ae9d1e90723fbe",
+        "type": "change",
+        "z": "cc0c669d94886947",
+        "name": "TH-Suporte",
+        "rules": [
+            {
+                "t": "change",
+                "p": "payload",
+                "pt": "msg",
+                "from": "ok",
+                "fromt": "str",
+                "to": "TH-Suporte",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 870,
+        "y": 440,
+        "wires": [
+            [
+                "63fbe48d349a6e61"
+            ]
+        ]
+    },
+    {
+        "id": "3452f7bbfcbc62b1",
+        "type": "function",
+        "z": "cc0c669d94886947",
+        "name": "",
+        "func": "msg.payload = new Date().toLocaleString(\"pt-BR\", { timeZone: \"America/Recife\" }).replace(\" \", \",\") + \",\" + msg.payload;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 700,
+        "y": 300,
+        "wires": [
+            [
+                "0908c35100f09a21",
+                "77f5664443d1476d"
+            ]
+        ]
+    },
+    {
+        "id": "90246fea7e5e361c",
+        "type": "function",
+        "z": "cc0c669d94886947",
+        "name": "",
+        "func": "msg.payload = new Date().toLocaleString(\"pt-BR\", { timeZone: \"America/Recife\" }).replace(\" \", \",\") + \",\" + msg.payload;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 700,
+        "y": 440,
+        "wires": [
+            [
+                "84ae9d1e90723fbe"
+            ]
+        ]
+    },
+    {
+        "id": "4f74e865a917b8c3",
+        "type": "function",
+        "z": "cc0c669d94886947",
+        "name": "reload msg",
+        "func": "msg.url = 'http://20.206.97.4:1880/flows';\nmsg.method = 'POST';\nmsg.headers = {};\nmsg.headers['content-type'] = \"application/json; charset=utf-8\";\nmsg.headers['Node-RED-Deployment-Type'] = \"reload\";\nmsg.headers['Node-RED-API-Version'] = \"v2\";\nmsg.payload = {\n    \"flows\": [{}]\n};\nreturn msg;\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 950,
+        "y": 240,
+        "wires": [
+            [
+                "6080ad7942e8c9e8"
+            ]
+        ]
+    },
+    {
+        "id": "6080ad7942e8c9e8",
+        "type": "http request",
+        "z": "cc0c669d94886947",
+        "name": "",
+        "method": "use",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 1110,
+        "y": 240,
+        "wires": [
+            [
+                "5d5971b08616e3e9"
+            ]
+        ]
+    },
+    {
+        "id": "5d5971b08616e3e9",
+        "type": "debug",
+        "z": "cc0c669d94886947",
+        "name": "results",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1250,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "77f5664443d1476d",
+        "type": "switch",
+        "z": "cc0c669d94886947",
+        "name": "auth check",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "cont",
+                "v": "failed",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 790,
+        "y": 240,
+        "wires": [
+            [
+                "4f74e865a917b8c3"
+            ]
+        ],
+        "info": "Inicia a lógica de recarregamento do\r\nflow em caso de falha de autenticação;"
+    },
+    {
+        "id": "c9ad344df6a7edf4",
+        "type": "debug",
+        "z": "cc0c669d94886947",
+        "name": "debug 2",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 580,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "32c9a75570c679b6",
+        "type": "switch",
+        "z": "cc0c669d94886947",
+        "name": "",
+        "property": "payload.status",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "neq",
+                "v": "ok",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 290,
+        "y": 220,
+        "wires": [
+            [
+                "40193350d7502297"
+            ]
+        ]
+    },
+    {
+        "id": "40193350d7502297",
+        "type": "delay",
+        "z": "cc0c669d94886947",
+        "name": "",
+        "pauseType": "delay",
+        "timeout": "10",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 420,
+        "y": 220,
+        "wires": [
+            [
+                "c9ad344df6a7edf4",
+                "989e687dc11c6157"
+            ]
+        ]
+    },
+    {
+        "id": "3841020713a46fbc",
+        "type": "switch",
+        "z": "cc0c669d94886947",
+        "name": "",
+        "property": "payload.status",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "neq",
+                "v": "ok",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 290,
+        "y": 380,
+        "wires": [
+            [
+                "49d95bf67a13c903"
+            ]
+        ]
+    },
+    {
+        "id": "49d95bf67a13c903",
+        "type": "delay",
+        "z": "cc0c669d94886947",
+        "name": "",
+        "pauseType": "delay",
+        "timeout": "10",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 420,
+        "y": 380,
+        "wires": [
+            [
+                "2da91cb31f4a9e1c"
+            ]
+        ]
+    },
+    {
+        "id": "989e687dc11c6157",
+        "type": "ewelink-temperature-humidity",
+        "z": "cc0c669d94886947",
+        "name": "TH-Ypioca",
+        "deviceId": "1001032033",
+        "auth": "ac872718dc6297f2",
+        "x": 310,
+        "y": 300,
+        "wires": [
+            [
+                "24ea26aea5f6edfb",
+                "32c9a75570c679b6"
+            ]
+        ]
+    },
+    {
+        "id": "2da91cb31f4a9e1c",
+        "type": "ewelink-temperature-humidity",
+        "z": "cc0c669d94886947",
+        "name": "TH-Suporte",
+        "deviceId": "1000f1fbc9",
+        "auth": "ac872718dc6297f2",
+        "x": 310,
+        "y": 440,
+        "wires": [
+            [
+                "f9fcefa5469f5044",
+                "3841020713a46fbc"
+            ]
+        ]
+    },
+    {
+        "id": "f6837e3eae609412",
+        "type": "csv",
+        "z": "cc0c669d94886947",
+        "name": "temperaturas",
+        "sep": ",",
+        "hdrin": "",
+        "hdrout": "none",
+        "multi": "one",
+        "ret": "\\r\\n",
+        "temp": "",
+        "skip": "0",
+        "strings": true,
+        "include_empty_strings": false,
+        "include_null_values": "",
+        "x": 550,
+        "y": 580,
+        "wires": [
+            [
+                "ec60753c1feefd48"
+            ]
+        ]
+    },
+    {
+        "id": "a08842d64fae79f2",
+        "type": "change",
+        "z": "cc0c669d94886947",
+        "name": "TH-Suporte",
+        "rules": [
+            {
+                "t": "change",
+                "p": "payload",
+                "pt": "msg",
+                "from": "ok",
+                "fromt": "str",
+                "to": "TH-Sapupara",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 870,
+        "y": 580,
+        "wires": [
+            [
+                "63fbe48d349a6e61"
+            ]
+        ]
+    },
+    {
+        "id": "ec60753c1feefd48",
+        "type": "function",
+        "z": "cc0c669d94886947",
+        "name": "",
+        "func": "msg.payload = new Date().toLocaleString(\"pt-BR\", { timeZone: \"America/Recife\" }).replace(\" \", \",\") + \",\" + msg.payload;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 700,
+        "y": 580,
+        "wires": [
+            [
+                "a08842d64fae79f2"
+            ]
+        ]
+    },
+    {
+        "id": "3257d8d671c9fb32",
+        "type": "switch",
+        "z": "cc0c669d94886947",
+        "name": "",
+        "property": "payload.status",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "neq",
+                "v": "ok",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 290,
+        "y": 520,
+        "wires": [
+            [
+                "758772d0df6e91cc"
+            ]
+        ]
+    },
+    {
+        "id": "758772d0df6e91cc",
+        "type": "delay",
+        "z": "cc0c669d94886947",
+        "name": "",
+        "pauseType": "delay",
+        "timeout": "10",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 420,
+        "y": 520,
+        "wires": [
+            [
+                "aa7fc9febe8d22ac"
+            ]
+        ]
+    },
+    {
+        "id": "aa7fc9febe8d22ac",
+        "type": "ewelink-temperature-humidity",
+        "z": "cc0c669d94886947",
+        "name": "TH-Sapupara*",
+        "deviceId": "1000f1fbc9",
+        "auth": "ac872718dc6297f2",
+        "x": 320,
+        "y": 580,
+        "wires": [
+            [
+                "f6837e3eae609412",
+                "3257d8d671c9fb32"
+            ]
+        ]
+    },
+    {
+        "id": "ac872718dc6297f2",
+        "type": "ewelink-credentials"
+    }
+]
